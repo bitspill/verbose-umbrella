@@ -11,3 +11,4 @@ textComments.txt
 
 # Build stuff
 oipd
+!oipd/
