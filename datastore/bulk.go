@@ -62,6 +62,22 @@ func (bi *BulkIndexer) quickCommit() {
 		}
 
 		t.End("Indexed blocks/transactions", logger.Attrs{"items": len(br.Items), "took": br.Took, "errors": br.Errors})
+		if br.Errors {
+			log.Error("encountered errors, seeking")
+			for _, item := range br.Items {
+				for _, value := range item {
+					if value.Error != nil {
+						log.Error("error executing bulk action", logger.Attrs{
+							"index":  value.Index,
+							"id":     value.Id,
+							"reason": value.Error.Reason,
+							"error":  value.Error,
+							// "errDump": spew.Sdump(err)
+						})
+					}
+				}
+			}
+		}
 	}
 }
 
