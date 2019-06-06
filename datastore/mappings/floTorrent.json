@@ -1,0 +1,50 @@
+{
+  "settings": {
+    "number_of_shards": 2
+  },
+  "mappings": {
+    "_doc": {
+      "dynamic": "true",
+      "properties": {
+        "flo_torrent": {
+          "properties": {
+            "name": {
+              "type": "keyword"
+            },
+            "filename": {
+              "type": "keyword"
+            },
+            "type": {
+              "type": "keyword"
+            },
+            "size": {
+              "type": "long"
+            },
+            "description": {
+              "type": "keyword"
+            },
+            "tags": {
+              "type": "keyword"
+            },
+            "chunks": {
+              "type": "long"
+            },
+            "startTx": {
+              "type": "keyword"
+            }
+          }
+        },
+        "data": {
+          "properties": {
+            "data": {
+              "type": "binary"
+            },
+            "next": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    }
+  }
+}
