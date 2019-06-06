@@ -74,10 +74,20 @@ func onFilteredBlockConnected(height int32, header *wire.BlockHeader, txns []*fl
 				log.Info("popping block", attr)
 				recentBlocks.PopFront()
 			}
-			_, err := IndexBlockAtHeight(int64(height), *ilb)
-			if err != nil {
-				attr["err"] = err
-				log.Error("onFilteredBlockConnected unable to index block, re-org", attr)
+
+			log.Info("refilling gap since re-org", attr)
+			for i := ilb.Block.Height + 1; i <= int64(height); i++ {
+				attr["i"] = i
+				attr["lastHash"] = ilb.Block.Hash
+				attr["lastHeight"] = ilb.Block.Height
+				log.Info("filling gap", attr)
+				nlb, err := IndexBlockAtHeight(int64(i), *ilb)
+				if err != nil {
+					attr["err"] = err
+					log.Error("onFilteredBlockConnected unable to index block, re-org", attr)
+					return
+				}
+				ilb = &nlb
 			}
 
 			return
