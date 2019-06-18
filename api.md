@@ -31,7 +31,7 @@ All endpoints have a common `/oip/`prefix
   - /oip5/template/search?q={query}
 
 
-##Common Query Params
+## Common Query Params
 All API routes which may return multiple results
 also have `after`, `limit`, `page` and `sort` query
 parameters which can be used to facilitate pagination
