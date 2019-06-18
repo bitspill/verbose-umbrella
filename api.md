@@ -1,8 +1,10 @@
 API
 =
 
+All endpoints have a common `/oip/`prefix
+
 - oipd
-  - /version
+  - /daemon/version
   - /floData/search?q={query}
 - artifacts (oip41 & oip042)
   - /artifact/get/latest?nsfw=true/false
@@ -20,6 +22,13 @@ API
 - oip041
   - /oip041/artifact/get/latest?nsfw=true/false
   - /oip041/artifact/get/{id:[a-f0-9]+}
+- oip5
+  - /oip5/record/get/latest
+  - /oip5/record/get/{id:[a-f0-9]+}
+  - /oip5/record/search?q={query}
+  - /oip5/template/get/latest
+  - /oip5/template/get/{id:[a-f0-9]+
+  - /oip5/template/search?q={query}
 
 
 ##Common Query Params
