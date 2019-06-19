@@ -23,12 +23,12 @@ All endpoints have a common `/oip/`prefix
   - /oip041/artifact/get/latest?nsfw=true/false
   - /oip041/artifact/get/{id:[a-f0-9]+}
 - oip5
-  - /oip5/record/get/latest
-  - /oip5/record/get/{id:[a-f0-9]+}
-  - /oip5/record/search?q={query}
-  - /oip5/template/get/latest
-  - /oip5/template/get/{id:[a-f0-9]+
-  - /oip5/template/search?q={query}
+  - /o5/record/get/latest
+  - /o5/record/get/{id:[a-f0-9]+}
+  - /o5/record/search?q={query}
+  - /o5/template/get/latest
+  - /o5/template/get/{id:[a-f0-9]+
+  - /o5/template/search?q={query}
 
 
 ## Common Query Params
