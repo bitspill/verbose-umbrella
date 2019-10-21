@@ -41,7 +41,7 @@ func init() {
 	publisherCache, _ = lru.New(publisherCacheDepth)
 }
 
-func on5msg(msg oipProto.SignedMessage, tx *datastore.TransactionData) {
+func on5msg(msg *oipProto.SignedMessage, tx *datastore.TransactionData) {
 	attr := logger.Attrs{"txid": tx.Transaction.Txid}
 	log.Info("oip5 ", attr)
 
