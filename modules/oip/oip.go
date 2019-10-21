@@ -217,7 +217,7 @@ func onGp64(gp64 string, tx *datastore.TransactionData) {
 }
 
 func processProto(b []byte, tx *datastore.TransactionData, attr logger.Attrs) {
-	msg := new(SignedMessage)
+	msg := new(oipProto.SignedMessage)
 	err := proto.Unmarshal(b, msg)
 	if err != nil {
 		attr["err"] = err
