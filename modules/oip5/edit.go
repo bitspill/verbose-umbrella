@@ -142,7 +142,7 @@ moreEdits:
 }
 
 func editTemplate(edit elasticOip5Edit) {
-	tmpl, err := templates.GetTemplate(edit.Reference)
+	tmpl, err := templates.GetTemplateByTxid(edit.Reference)
 	if err != nil {
 		markEditInvalid(edit.Meta.Txid)
 		log.Error("unable to obtain template for edit", logger.Attrs{"err": err, "reference": edit.Reference, "txid": edit.Meta.Txid})

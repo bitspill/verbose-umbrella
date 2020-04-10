@@ -6,6 +6,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/azer/logger"
 	"github.com/golang/protobuf/jsonpb"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/oipwg/oip/config"
 	"github.com/oipwg/oip/datastore"
+	"github.com/oipwg/oip/modules/oip5/templates"
 )
 
 var recordCacheDepth = 10000
@@ -51,21 +53,43 @@ func intakeRecord(r *pb_oip5.RecordProto, pubKey []byte, tx *datastore.Transacti
 	}
 	raw64 := base64.StdEncoding.EncodeToString(raw)
 
+	usedTemplates := make(map[string]struct{})
+
 	strPubKey := string(pubKey)
 	pubName := ""
 	// Check to see if a publisher registration is contained
 	if r.Details != nil {
 		for i := range r.Details.Details {
-			if r.Details.Details[i].TypeUrl == registeredPublisherTypeUrl {
-				regPub := &pb_templates.Tmpl_433C2783{}
-				err := ptypes.UnmarshalAny(r.Details.Details[i], regPub)
-				if err != nil {
-					log.Error("unable to decode reg pub any", logger.Attrs{"err": err, "txid": tx.Transaction.Txid})
+			if len(r.Details.Details[i].TypeUrl) == 52 {
+				usedTemplates[r.Details.Details[i].TypeUrl[44:]] = struct{}{}
+
+				if r.Details.Details[i].TypeUrl[44:] == registeredPublisherTypeUrl[44:] {
+					regPub := &pb_templates.Tmpl_433C2783{}
+					err := ptypes.UnmarshalAny(r.Details.Details[i], regPub)
+					if err != nil {
+						log.Error("unable to decode reg pub any", logger.Attrs{"err": err, "txid": tx.Transaction.Txid})
+					}
+					pubName = regPub.Name
 				}
-				pubName = regPub.Name
 			}
 		}
 	}
+
+	for k := range usedTemplates {
+		tmpl, err := templates.GetTemplateByName("tmpl_" + k)
+		if err != nil || tmpl == nil {
+			log.Error("unknown used template", logger.Attrs{"txid": tx.Transaction.Txid, "err": err, "tmpl": k})
+			continue
+		}
+		for _, extend := range tmpl.Extends {
+			id := fmt.Sprintf("%X", extend)
+			if _, ok := usedTemplates[id]; !ok {
+				log.Error("missing required extended template", &logger.Attrs{"txid": tx.Transaction.Txid, "tmpl": tmpl.Name, "req": id})
+				return nil, errors.New("missing required extended template")
+			}
+		}
+	}
+
 	if pubName == "" {
 		pubName, err = GetPublisherName(strPubKey)
 		if err != nil {

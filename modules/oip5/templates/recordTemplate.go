@@ -313,7 +313,7 @@ func LoadTemplatesFromES(ctx context.Context) error {
 	return nil
 }
 
-func GetTemplate(txid string) (*RecordTemplate, error) {
+func GetTemplateByTxid(txid string) (*RecordTemplate, error) {
 	if len(txid) < 8 {
 		log.Error("invalid txid", logger.Attrs{"txid": txid})
 		return nil, errors.New("invalid txid")
@@ -323,6 +323,34 @@ func GetTemplate(txid string) (*RecordTemplate, error) {
 	if err != nil {
 		log.Error("invalid txid", logger.Attrs{"txid": txid})
 		return nil, errors.New("invalid txid")
+	}
+	tmpl := templateCache[uint32(ident)]
+	return tmpl, nil
+}
+
+func GetTemplateByName(name string) (*RecordTemplate, error) {
+	if len(name) != 13 {
+		log.Error("invalid template name", logger.Attrs{"name": name})
+		return nil, errors.New("invalid name")
+	}
+	ident, err := strconv.ParseUint(name[5:], 16, 32)
+	if err != nil {
+		log.Error("invalid template name", logger.Attrs{"name": name, "err": err})
+		return nil, errors.New("invalid name")
+	}
+	tmpl := templateCache[uint32(ident)]
+	return tmpl, nil
+}
+
+func GetTemplateByUrl(url string) (*RecordTemplate, error) {
+	if len(url) != 52 {
+		log.Error("invalid url", logger.Attrs{"url": url})
+		return nil, errors.New("invalid url")
+	}
+	ident, err := strconv.ParseUint(url[44:], 16, 32)
+	if err != nil {
+		log.Error("invalid url", logger.Attrs{"url": url})
+		return nil, errors.New("invalid url")
 	}
 	tmpl := templateCache[uint32(ident)]
 	return tmpl, nil
