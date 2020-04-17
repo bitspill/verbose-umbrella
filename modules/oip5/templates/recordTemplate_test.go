@@ -11,6 +11,7 @@ import (
 	"github.com/bitspill/floutil"
 	"github.com/davecgh/go-spew/spew"
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/protoc-gen-go/descriptor"
 	"github.com/oipwg/proto/go/pb_oip"
 	"github.com/oipwg/proto/go/pb_oip5"
 	"github.com/oipwg/proto/go/pb_oip5/pb_templates"
@@ -412,4 +413,18 @@ func TestEditTemplate(t *testing.T) {
 
 	p64 := base64.StdEncoding.EncodeToString(pb)
 	fmt.Println(p64)
+}
+
+func TestUnmarshalFileDescriptorSet(t *testing.T) {
+	b64 := "CoEBCgdwLnByb3RvEhJvaXBQcm90by50ZW1wbGF0ZXMiWgoBUBIUCgZhdmF0YXIYASABKAsyBFR4aWQSGQoLdXJsTGlua0xpc3QYAiADKAsyBFR4aWQSDwoHdGFnTGlzdBgDIAMoCRoTCgRUeGlkEgsKA3JhdxgBIAEoDGIGcHJvdG8z"
+	descriptorSetProto, err := base64.StdEncoding.DecodeString(b64)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var dsp = &descriptor.FileDescriptorSet{}
+	err = proto.Unmarshal(descriptorSetProto, dsp)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fmt.Println(dsp)
 }

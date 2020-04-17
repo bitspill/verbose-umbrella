@@ -84,7 +84,7 @@ func intakeRecord(r *pb_oip5.RecordProto, pubKey []byte, tx *datastore.Transacti
 		for _, extend := range tmpl.Extends {
 			id := fmt.Sprintf("%X", extend)
 			if _, ok := usedTemplates[id]; !ok {
-				log.Error("missing required extended template", &logger.Attrs{"txid": tx.Transaction.Txid, "tmpl": tmpl.Name, "req": id})
+				log.Error("missing required extended template", logger.Attrs{"txid": tx.Transaction.Txid, "tmpl": tmpl.Name, "req": id})
 				return nil, errors.New("missing required extended template")
 			}
 		}
@@ -93,7 +93,7 @@ func intakeRecord(r *pb_oip5.RecordProto, pubKey []byte, tx *datastore.Transacti
 	if pubName == "" {
 		pubName, err = GetPublisherName(strPubKey)
 		if err != nil {
-			log.Error("error getting publisher name", logger.Attrs{"txid": tx.Transaction.Txid, "pubkey": strPubKey, "err": err})
+			log.Info("couldn't find publisher name", logger.Attrs{"txid": tx.Transaction.Txid, "pubkey": strPubKey, "err": err})
 		}
 	}
 

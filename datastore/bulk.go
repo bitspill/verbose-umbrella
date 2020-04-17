@@ -29,6 +29,7 @@ type BulkIndexer struct {
 	timedCommitRate    time.Duration
 	timedCommitRunning bool
 	timedCommitEnd     chan struct{}
+	ContainsProtoMP    bool
 }
 
 func (bi *BulkIndexer) BeginTimedCommits(rate time.Duration) {
@@ -65,9 +66,10 @@ func (bi *BulkIndexer) quickCommit() {
 
 		br, err := bi.Do(context.TODO())
 		if err != nil {
-			log.Error("Error commiting to ES in quickCommit", logger.Attrs{"err": spew.Sdump(err)})
+			log.Error("Error committing to ES in quickCommit", logger.Attrs{"err": spew.Sdump(err)})
 			return
 		}
+		bi.ContainsProtoMP = false
 
 		t.End("Quick Indexed %d blocks & transactions, took %v (errors=%v)", len(br.Items), br.Took, br.Errors)
 		if br.Errors {
@@ -175,7 +177,7 @@ func (bi *BulkIndexer) CheckSizeStore(ctx context.Context) (BulkIndexerResponse,
 	// https://www.elastic.co/guide/en/elasticsearch/reference/master/tune-for-indexing-speed.html#_use_bulk_requests
 	// > it is advisable to avoid going beyond a couple tens of megabytes per request even if larger requests seem to perform better.
 	// Set to 10mb to straddle between recomended amounts -skyoung
-	if estimatedSize > 10*humanize.MByte {
+	if estimatedSize > 10*humanize.MByte || bi.ContainsProtoMP {
 		log.Info("Bulk Indexing %s of data, %d bulk actions", humanize.Bytes(uint64(estimatedSize)), bi.NumberOfActions())
 		t := log.Timer()
 		br, err := bi.Do(ctx)
@@ -186,7 +188,7 @@ func (bi *BulkIndexer) CheckSizeStore(ctx context.Context) (BulkIndexerResponse,
 			})
 			return BulkIndexerResponse{}, err
 		}
-
+		bi.ContainsProtoMP = false
 		t.End("Bulk Indexed %d blocks & transactions, took %v (errors=%v)", len(br.Items), br.Took, br.Errors)
 
 		if br.Errors {

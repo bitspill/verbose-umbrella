@@ -68,9 +68,9 @@ func handleGetRef(w http.ResponseWriter, r *http.Request) {
 
 func onDatastoreCommit() {
 	// If we are still working on the initial sync, don't attempt to complete multiparts.
-	if oipSync.IsInitialSync {
-		return
-	}
+	// if oipSync.IsInitialSync {
+	// 	return
+	// }
 
 	multiPartCommitMutex.Lock()
 	defer multiPartCommitMutex.Unlock()
@@ -392,6 +392,7 @@ func onMultipartProto(msg *pb_oip.SignedMessage, tx *datastore.TransactionData) 
 
 	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(multipartIndex)).Type("_doc").Doc(ms).Id(tx.Transaction.Txid)
 	datastore.AutoBulk.Add(bir)
+	datastore.AutoBulk.ContainsProtoMP = true
 }
 
 type MultipartSingle struct {
