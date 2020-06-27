@@ -177,7 +177,7 @@ func (bi *BulkIndexer) CheckSizeStore(ctx context.Context) (BulkIndexerResponse,
 	// https://www.elastic.co/guide/en/elasticsearch/reference/master/tune-for-indexing-speed.html#_use_bulk_requests
 	// > it is advisable to avoid going beyond a couple tens of megabytes per request even if larger requests seem to perform better.
 	// Set to 10mb to straddle between recomended amounts -skyoung
-	if estimatedSize > 10*humanize.MByte || bi.ContainsProtoMP {
+	if estimatedSize > 10*humanize.MByte || (bi.ContainsProtoMP && bi.NumberOfActions() > 0) {
 		log.Info("Bulk Indexing %s of data, %d bulk actions", humanize.Bytes(uint64(estimatedSize)), bi.NumberOfActions())
 		t := log.Timer()
 		br, err := bi.Do(ctx)

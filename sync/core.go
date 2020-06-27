@@ -1,6 +1,8 @@
 package sync
 
 import (
+	"time"
+
 	"github.com/bitspill/flod/chaincfg/chainhash"
 	"github.com/bitspill/flod/flojson"
 	"github.com/bitspill/floutil"
@@ -46,6 +48,7 @@ func IndexBlockAtHeight(height int64, lb datastore.BlockData) (datastore.BlockDa
 
 	datastore.AutoBulk.StoreBlock(bd)
 
+	hadFloData := false
 	for i := range bd.Block.RawTx {
 		rawTx := &bd.Block.RawTx[i]
 
@@ -63,10 +66,15 @@ func IndexBlockAtHeight(height int64, lb datastore.BlockData) (datastore.BlockDa
 
 		datastore.AutoBulk.StoreTransaction(tx)
 		if len(tx.Transaction.FloData) != 0 {
+			hadFloData = hadFloData || !rawTx.Vin[0].IsCoinBase()
 			events.Publish("flo:floData", tx.Transaction.FloData, tx)
 		}
 	}
 	recentBlocks.Push(&bd)
+
+	if hadFloData && bd.Block.Height > 3430000 {
+		time.Sleep(50 * time.Millisecond)
+	}
 	return bd, nil
 }
 

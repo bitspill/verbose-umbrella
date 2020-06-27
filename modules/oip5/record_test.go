@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/azer/logger"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
 	"github.com/oipwg/proto/go/pb_oip"
@@ -229,9 +230,9 @@ import (
 // }`
 
 func TestDecodeRecord(t *testing.T) {
-	t.SkipNow()
+	// t.SkipNow()
 
-	b, err := base64.StdEncoding.DecodeString("CpcBEpQBOpEBCkMKNHR5cGUuZ29vZ2xlYXBpcy5jb20vb2lwUHJvdG8udGVtcGxhdGVzLnRtcGxfMkYyOUQ4QzASCwoDZmx5EgRlbW1hCkoKNHR5cGUuZ29vZ2xlYXBpcy5jb20vb2lwUHJvdG8udGVtcGxhdGVzLnRtcGxfNUQ4REI4NUISEgoEcnlsbxIFZWFydGgaA3JlZBABGAEiIm9ScG1lWXZqZ2Zoa1NwUFdHTDhlUDVlUHVweW9wM2h6OWoqQR8cQQI9PEBYKuv15qK4aJ1BDg+pdLnuFSRMlNKtUg1zSRv3QTPefPerz8MVTqd5o77mIh4klLFuMzeEt5j/uUiz")
+	b, err := base64.StdEncoding.DecodeString("CpgBEpUBOpIBCkQKNHR5cGUuZ29vZ2xlYXBpcy5jb20vb2lwUHJvdG8udGVtcGxhdGVzLnRtcGxfQjZFOUFGOUISDAoITWNEb3dhbGwSAApKCjR0eXBlLmdvb2dsZWFwaXMuY29tL29pcFByb3RvLnRlbXBsYXRlcy50bXBsXzIwQUQ0NUU3EhIKCEFsYXNkYWlyEgAYACAAKgAQARgBIiJGQjQxc2hKeEhXcGhTTXAya0c5YXRxU1o0eVdWcVVXc2FIKkEfJp2SyTmKH01vS8MXpAiL9hxX/a+fLTPZLBOHTk/EwxE2oBILv7aLmG7DJyJEDQOwzyBZ2bUdGoB488XA9pHgWw==")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -252,6 +253,31 @@ func TestDecodeRecord(t *testing.T) {
 
 	_ = datastore.Setup(context.Background())
 	_ = templates.LoadTemplatesFromES(context.Background())
+
+	usedTemplates := make(map[string]struct{})
+
+	// Check to see if a publisher registration is contained
+	if o5.Record.Details != nil {
+		for i := range o5.Record.Details.Details {
+			if len(o5.Record.Details.Details[i].TypeUrl) == 52 {
+				usedTemplates[o5.Record.Details.Details[i].TypeUrl[44:]] = struct{}{}
+			}
+		}
+	}
+	for k := range usedTemplates {
+		tmpl, err := templates.GetTemplateByName("tmpl_" + k)
+		if err != nil || tmpl == nil {
+			log.Error("unknown used template", logger.Attrs{"err": err, "tmpl": k})
+			continue
+		}
+		for _, extend := range tmpl.Extends {
+			id := fmt.Sprintf("%X", extend)
+			if _, ok := usedTemplates[id]; !ok {
+				log.Error("missing required extended template", logger.Attrs{"tmpl": tmpl.Name, "req": id})
+				return
+			}
+		}
+	}
 
 	fmt.Println((&jsonpb.Marshaler{}).MarshalToString(o5))
 }
