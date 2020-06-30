@@ -72,8 +72,8 @@ func IndexBlockAtHeight(height int64, lb datastore.BlockData) (datastore.BlockDa
 	}
 	recentBlocks.Push(&bd)
 
-	if hadFloData && bd.Block.Height > 3430000 {
-		time.Sleep(50 * time.Millisecond)
+	if hadFloData && bd.Block.Height > 4000000 {
+		time.Sleep(100 * time.Millisecond)
 	}
 	return bd, nil
 }
