@@ -87,9 +87,9 @@ func onFloDataMainNet(floData string, tx *datastore.TransactionData) {
 		return
 	}
 
-	if processPrefix("json:", "sync:floData:json", floData, tx) {
-		return
-	}
+	// if processPrefix("json:", "sync:floData:json", floData, tx) {
+	// 	return
+	// }
 	if processPrefix("gp64:", "sync:floData:gp64", floData, tx) {
 		return
 	}
