@@ -1,9 +1,11 @@
 package oip5
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strconv"
 	"strings"
@@ -67,22 +69,22 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ok, err := flo.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
-	if err != nil {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "unable to validate signature",
-		})
-		log.Error("unable to validate signature", logger.Attrs{"err": err, "txid": opts["id"]})
-		return
-	}
-
-	if !ok {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "invalid signature",
-		})
-		log.Error("invalid signature", logger.Attrs{"err": err, "txid": opts["id"]})
-		return
-	}
+	//ok, err := flo.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
+	//if err != nil {
+	//	httpapi.RespondJSON(w, 400, map[string]interface{}{
+	//		"error": "unable to validate signature",
+	//	})
+	//	log.Error("unable to validate signature", logger.Attrs{"err": err, "txid": opts["id"]})
+	//	return
+	//}
+	//
+	//if !ok {
+	//	httpapi.RespondJSON(w, 400, map[string]interface{}{
+	//		"error": "invalid signature",
+	//	})
+	//	log.Error("invalid signature", logger.Attrs{"err": err, "txid": opts["id"]})
+	//	return
+	//}
 
 	rec, err := GetRecord(opts["id"])
 	if err != nil {
@@ -121,74 +123,31 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tx, err := flo.GetTxVerbose(txh)
+	paid := false
+	if bytes.Equal(scs.Coin.Raw, []byte("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")) {
+		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
+	}
+
+	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000001")) {
+		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
+	}
+	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000002")) {
+		paid, err = checkRvnAsset(scs, proofPost.SigningAddress)
+	}
+
 	if err != nil {
 		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "unable to locate transaction",
+			"error": "unable to check proof",
 		})
-		log.Error("unable to obtain vinTx", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString})
+		log.Error("unable to check payment", logger.Attrs{"paymentId": proofPost.PaymentTxid, "signingAddress": proofPost.SigningAddress, "id": opts["id"], "term": termString, "err": err})
 		return
 	}
 
-	// ToDo: it's valid to send multiple vout to the same destination
-	//  but we'll only check for single vout covering full amount currently
-	paid := false
-voutLoop:
-	for _, vout := range tx.Vout {
-		if vout.Value >= float64(scs.Amount)/float64(scs.Scale) {
-			for _, address := range vout.ScriptPubKey.Addresses {
-				if address == scs.Destination {
-					paid = true
-					break voutLoop
-				}
-			}
-		}
-	}
 	if !paid {
 		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "insufficient payment",
+			"error": "insufficient proof",
 		})
-		log.Error("insufficient payment", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString})
-		return
-	}
-
-	vinTxh := &chainhash.Hash{}
-	paid = false
-vinLoop:
-	for _, vin := range tx.Vin {
-		err := chainhash.Decode(vinTxh, vin.Txid)
-		if err != nil {
-			// should be impossible...
-			httpapi.RespondJSON(w, 400, map[string]interface{}{
-				"error": "unable to decode transaction",
-			})
-			log.Error("unable to decode vin txid", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString, "vinTxid": vin.Txid})
-			return
-		}
-
-		vinTx, err := flo.GetTxVerbose(vinTxh)
-		if err != nil {
-			httpapi.RespondJSON(w, 400, map[string]interface{}{
-				"error": "unable to locate transaction",
-			})
-			log.Error("unable to obtain vinTx", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString, "vinTxid": vin.Txid})
-			return
-		}
-
-		for _, vout := range vinTx.Vout {
-			for _, address := range vout.ScriptPubKey.Addresses {
-				if address == proofPost.SigningAddress {
-					paid = true
-					break vinLoop
-				}
-			}
-		}
-	}
-	if !paid {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "insufficient payment",
-		})
-		log.Error("insufficient payment", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString})
+		log.Error("insufficient proof", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString})
 		return
 	}
 
@@ -201,6 +160,134 @@ vinLoop:
 		Network:    comCont.Network.String(),
 		Location:   comCont.Location,
 	})
+}
+
+func checkFloPayment(txh *chainhash.Hash, scs *livenet.SimpleCoinSale, signingAddress string) (bool, error) {
+	tx, err := flo.GetTxVerbose(txh)
+	if err != nil {
+		return false, fmt.Errorf("unable to optain vinTx: %w", err)
+	}
+
+	paid := false
+voutLoop:
+	for _, vout := range tx.Vout {
+		if vout.Value >= float64(scs.Amount)/float64(scs.Scale) {
+			for _, address := range vout.ScriptPubKey.Addresses {
+				if address == scs.Destination {
+					paid = true
+					break voutLoop
+				}
+			}
+		}
+	}
+
+	if !paid {
+		return false, nil
+	}
+
+	vinTxh := &chainhash.Hash{}
+	paid = false
+vinLoop:
+	for _, vin := range tx.Vin {
+		err := chainhash.Decode(vinTxh, vin.Txid)
+		if err != nil {
+			// should be impossible...
+			return false, fmt.Errorf("unable to decode vin txid: %w", err)
+		}
+
+		vinTx, err := flo.GetTxVerbose(vinTxh)
+		if err != nil {
+			//log.Error("unable to obtain vinTx", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString, "vinTxid": vin.Txid})
+			return false, fmt.Errorf("unable to obtain vinTx: %w", err)
+		}
+
+		for _, vout := range vinTx.Vout {
+			for _, address := range vout.ScriptPubKey.Addresses {
+				if address == signingAddress {
+					paid = true
+					break vinLoop
+				}
+			}
+		}
+	}
+	return paid, nil
+}
+
+func checkRvnPayment(txh *chainhash.Hash, scs *livenet.SimpleCoinSale, signingAddress string) (bool, error) {
+	paid := false
+
+	txid := txh.String()
+	res, err := http.Get("https://explorer-api.ravenland.org/tx/" + txid)
+	if err != nil {
+		return false, fmt.Errorf("tx request failed: %w", err)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	_ = res.Body.Close()
+	if err != nil {
+		return false, fmt.Errorf("tx read failed: %w", err)
+	}
+
+	var txResponse RavenLandApiTxResponse
+	err = json.Unmarshal(body, &txResponse)
+	if err != nil {
+		return false, fmt.Errorf("tx decode failed: %w", err)
+	}
+
+	for _, vout := range txResponse.Tx.Vout {
+		if vout.Quantity >= float64(scs.Amount)/float64(scs.Scale) && vout.Asset == "RVN" {
+			if vout.Address == scs.Destination {
+				paid = true
+				break
+			}
+		}
+	}
+
+	if !paid {
+		return false, nil
+	}
+
+	// reset state variable to check sender
+	paid = false
+
+	for _, vin := range txResponse.Tx.Vin {
+		if vin.VinType == "basic" && vin.Address == signingAddress {
+			paid = true
+			break
+		}
+	}
+
+	return paid, nil
+}
+
+func checkRvnAsset(scs *livenet.SimpleCoinSale, signingAddress string) (bool, error) {
+	paid := false
+
+	res, err := http.Get("https://explorer-api.ravenland.org/address/" + signingAddress + "/balances")
+	if err != nil {
+		return false, fmt.Errorf("balance request failed: %w", err)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	_ = res.Body.Close()
+	if err != nil {
+		return false, fmt.Errorf("balance read failed: %w", err)
+	}
+
+	var balResponse RavenLandApiBalanceResponse
+	err = json.Unmarshal(body, &balResponse)
+	if err != nil {
+		return false, fmt.Errorf("balance decode failed: %w", err)
+	}
+
+	bal, ok := balResponse.Data[scs.Destination]
+	if !ok {
+		return false, nil
+	}
+
+	paid = bal > float64(scs.Amount)/float64(scs.Scale)
+
+	return paid, nil
 }
 
 func handleLocationRequest(w http.ResponseWriter, r *http.Request) {
@@ -339,4 +426,39 @@ func getCommercialContent(rec *oip5Record) (*livenet.CommercialContent, error) {
 		}
 	}
 	return comCont, nil
+}
+
+type RavenLandApiTxResponse struct {
+	Height int64              `json:"height"`
+	Tx     RavenLandApiTxInfo `json:"tx"`
+}
+
+type RavenLandApiTxInfo struct {
+	Txid        string             `json:"txid"`
+	Hash        string             `json:"hash"`
+	Time        int64              `json:"time"`
+	Vin         []RavenLandApiVin  `json:"vin"`
+	Vout        []RavenLandApiVout `json:"vout"`
+	Size        int64              `json:"size"`
+	Vsize       int64              `json:"vsize"`
+	Locktime    int64              `json:"locktime"`
+	BlockHeight int64              `json:"blockHeight"`
+}
+
+type RavenLandApiVin struct {
+	VinType  string  `json:"type"`
+	Quantity float64 `json:"quantity"`
+	Address  string  `json:"address"`
+	Asset    string  `json:"asset"`
+}
+
+type RavenLandApiVout struct {
+	Address  string  `json:"address"`
+	Quantity float64 `json:"quantity"`
+	Asset    string  `json:"asset"`
+}
+
+type RavenLandApiBalanceResponse struct {
+	Data      map[string]float64 `json:"data"`
+	UpdatedAt int64              `json:"updatedAt"`
 }
