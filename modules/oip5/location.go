@@ -127,7 +127,6 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 	if bytes.Equal(scs.Coin.Raw, []byte("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")) {
 		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
 	}
-
 	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000001")) {
 		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
 	}
@@ -285,7 +284,7 @@ func checkRvnAsset(scs *livenet.SimpleCoinSale, signingAddress string) (bool, er
 		return false, nil
 	}
 
-	paid = bal > float64(scs.Amount)/float64(scs.Scale)
+	paid = bal >= float64(scs.Amount)/float64(scs.Scale)
 
 	return paid, nil
 }
@@ -395,7 +394,7 @@ func getEmbeddedTerm(rec *oip5Record, comCont *livenet.CommercialContent, term s
 	return nil, errors.New("embedded term not found")
 }
 
-func getExternalTerms(rec *oip5Record, comCont *livenet.CommercialContent, term string) (interface{}, error) {
+func getExternalTerms(_ *oip5Record, comCont *livenet.CommercialContent, term string) (interface{}, error) {
 	found := false
 	for _, t := range comCont.Terms {
 		if term == pb_oip.TxidToString(t) {
