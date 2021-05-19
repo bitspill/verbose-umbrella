@@ -2,6 +2,7 @@ package oip5
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -23,9 +24,17 @@ import (
 	"github.com/oipwg/oip/httpapi"
 )
 
+var decodedFloBytes []byte
+var decodedRvnBytes []byte
+var decodedAssetBytes []byte
+
 func init() {
 	o5Router.HandleFunc("/location/request", handleLocationRequest).Queries("id", "{id:[a-fA-F0-9]+}", "terms", "{terms}")
 	o5Router.HandleFunc("/location/proof", handleLocationProof).Queries("id", "{id:[a-fA-F0-9]+}", "terms", "{terms}")
+
+	decodedFloBytes, _ = hex.DecodeString("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")
+	decodedRvnBytes, _ = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
+	decodedAssetBytes, _ = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000002")
 }
 
 const commercialContentTypeUrl = "type.googleapis.com/oipProto.templates.tmpl_D8D0F22C"
@@ -124,17 +133,17 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 	}
 
 	paid := false
-	if bytes.Equal(scs.Coin.Raw, []byte("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")) {
+	if bytes.Equal(scs.Coin.Raw, decodedFloBytes) {
 		log.Info("checking flo")
 		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
-	}
-	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000001")) {
+	} else if bytes.Equal(scs.Coin.Raw, decodedRvnBytes) {
 		log.Info("checking rvn")
 		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
-	}
-	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000002")) {
+	} else if bytes.Equal(scs.Coin.Raw, decodedAssetBytes) {
 		log.Info("checking rvn asset")
 		paid, err = checkRvnAsset(scs, proofPost.SigningAddress)
+	} else {
+		log.Error("No matching coin", logger.Attrs{"coin": scs.Coin.String(), "id": opts["id"], "term": termString})
 	}
 
 	if err != nil {
