@@ -125,12 +125,15 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 
 	paid := false
 	if bytes.Equal(scs.Coin.Raw, []byte("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")) {
+		log.Info("checking flo")
 		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
 	}
 	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000001")) {
+		log.Info("checking rvn")
 		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
 	}
 	if bytes.Equal(scs.Coin.Raw, []byte("0000000000000000000000000000000000000000000000000000000000000002")) {
+		log.Info("checking rvn asset")
 		paid, err = checkRvnAsset(scs, proofPost.SigningAddress)
 	}
 
@@ -181,6 +184,7 @@ voutLoop:
 	}
 
 	if !paid {
+		log.Info("unable to find vout")
 		return false, nil
 	}
 
