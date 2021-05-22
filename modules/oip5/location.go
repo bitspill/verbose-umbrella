@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/oipwg/oip/rvn"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -26,15 +27,13 @@ import (
 
 var decodedFloBytes []byte
 var decodedRvnBytes []byte
-var decodedAssetBytes []byte
 
 func init() {
 	o5Router.HandleFunc("/location/request", handleLocationRequest).Queries("id", "{id:[a-fA-F0-9]+}", "terms", "{terms}")
 	o5Router.HandleFunc("/location/proof", handleLocationProof).Queries("id", "{id:[a-fA-F0-9]+}", "terms", "{terms}")
 
 	decodedFloBytes, _ = hex.DecodeString("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")
-	decodedRvnBytes, _ = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000001")
-	decodedAssetBytes, _ = hex.DecodeString("0000000000000000000000000000000000000000000000000000000000000002")
+	decodedRvnBytes, _ = hex.DecodeString("e1a9b68de823bdee67f1a8c55167cc15bf7006129d9acf072721a4043932b389")
 }
 
 const commercialContentTypeUrl = "type.googleapis.com/oipProto.templates.tmpl_D8D0F22C"
@@ -78,23 +77,6 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//ok, err := flo.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
-	//if err != nil {
-	//	httpapi.RespondJSON(w, 400, map[string]interface{}{
-	//		"error": "unable to validate signature",
-	//	})
-	//	log.Error("unable to validate signature", logger.Attrs{"err": err, "txid": opts["id"]})
-	//	return
-	//}
-	//
-	//if !ok {
-	//	httpapi.RespondJSON(w, 400, map[string]interface{}{
-	//		"error": "invalid signature",
-	//	})
-	//	log.Error("invalid signature", logger.Attrs{"err": err, "txid": opts["id"]})
-	//	return
-	//}
-
 	rec, err := GetRecord(opts["id"])
 	if err != nil {
 		httpapi.RespondJSON(w, 400, map[string]interface{}{
@@ -113,37 +95,22 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	scs, ok := term.(*livenet.SimpleCoinSale)
-	if !ok {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "unsupported term",
-		})
-		log.Error("unsupported term type", logger.Attrs{"term": term})
-		return
-	}
-
-	txh := &chainhash.Hash{}
-	err = chainhash.Decode(txh, proofPost.PaymentTxid)
-	if err != nil {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "invalid txid",
-		})
-		log.Error("unable to decode txid", logger.Attrs{"txid": opts["id"]})
-		return
-	}
-
 	paid := false
-	if bytes.Equal(scs.Coin.Raw, decodedFloBytes) {
-		log.Info("checking flo")
-		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
-	} else if bytes.Equal(scs.Coin.Raw, decodedRvnBytes) {
-		log.Info("checking rvn")
-		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
-	} else if bytes.Equal(scs.Coin.Raw, decodedAssetBytes) {
-		log.Info("checking rvn asset")
-		paid, err = checkRvnAsset(scs, proofPost.SigningAddress)
-	} else {
-		log.Error("No matching coin", logger.Attrs{"coin": scs.Coin.String(), "id": opts["id"], "term": termString})
+	scs, ok := term.(*livenet.SimpleCoinSale)
+	if ok {
+		done := false
+		err, paid, done = simpleSale(w, proofPost, opts, scs, termString)
+		if done {
+			return
+		}
+	}
+	sah, ok := term.(*livenet.SimpleAssetHeld)
+	if ok {
+		done := false
+		err, paid, done = simpleAsset(w, proofPost, opts, sah, termString)
+		if done {
+			return
+		}
 	}
 
 	if err != nil {
@@ -171,6 +138,66 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		Network:    comCont.Network.String(),
 		Location:   comCont.Location,
 	})
+}
+
+func simpleSale(w http.ResponseWriter, proofPost *LocationProofRequest, opts map[string]string, scs *livenet.SimpleCoinSale, termString string) (error, bool, bool) {
+	txh := &chainhash.Hash{}
+	err := chainhash.Decode(txh, proofPost.PaymentTxid)
+	if err != nil {
+		httpapi.RespondJSON(w, 400, map[string]interface{}{
+			"error": "invalid txid",
+		})
+		log.Error("unable to decode txid", logger.Attrs{"txid": opts["id"]})
+		return nil, false, true
+	}
+	ok := false
+	paid := false
+	if bytes.Equal(scs.Coin.Raw, decodedFloBytes) {
+		log.Info("checking flo")
+		ok, err = flo.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
+		if !ok || err != nil {
+			httpapi.RespondJSON(w, 400, map[string]interface{}{
+				"error": "invalid signature",
+			})
+			log.Error("invalid signature", logger.Attrs{"err": err, "txid": opts["id"]})
+			return nil, false, true
+		}
+		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
+	} else if bytes.Equal(scs.Coin.Raw, decodedRvnBytes) {
+		log.Info("checking rvn")
+		ok, err = rvn.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
+		if !ok || err != nil {
+			httpapi.RespondJSON(w, 400, map[string]interface{}{
+				"error": "invalid signature",
+			})
+			log.Error("invalid signature", logger.Attrs{"err": err, "txid": opts["id"]})
+			return nil, false, true
+		}
+		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
+	} else {
+		log.Error("No matching coin", logger.Attrs{"coin": scs.Coin.String(), "id": opts["id"], "term": termString})
+	}
+	return err, paid, false
+}
+
+func simpleAsset(w http.ResponseWriter, proofPost *LocationProofRequest, opts map[string]string, sah *livenet.SimpleAssetHeld, termString string) (error, bool, bool) {
+	paid := false
+	if bytes.Equal(sah.Coin.Raw, decodedRvnBytes) {
+		log.Info("checking rvn")
+		ok, err := rvn.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
+		if !ok || err != nil {
+			httpapi.RespondJSON(w, 400, map[string]interface{}{
+				"error": "invalid signature",
+			})
+			log.Error("invalid signature", logger.Attrs{"err": err, "txid": opts["id"]})
+			return nil, false, true
+		}
+		paid, err = checkRvnAsset(sah, proofPost.SigningAddress)
+		return err, paid, false
+	} else {
+		log.Error("No matching coin", logger.Attrs{"coin": sah.Coin.String(), "id": opts["id"], "term": termString})
+		return nil, false, false
+	}
 }
 
 func checkFloPayment(txh *chainhash.Hash, scs *livenet.SimpleCoinSale, signingAddress string) (bool, error) {
@@ -272,8 +299,12 @@ func checkRvnPayment(txh *chainhash.Hash, scs *livenet.SimpleCoinSale, signingAd
 	return paid, nil
 }
 
-func checkRvnAsset(scs *livenet.SimpleCoinSale, signingAddress string) (bool, error) {
+func checkRvnAsset(sah *livenet.SimpleAssetHeld, signingAddress string) (bool, error) {
 	paid := false
+
+	if sah.Expires != 0 && time.Now().Unix() > int64(sah.Expires) {
+		return false, errors.New("asset access expired")
+	}
 
 	res, err := http.Get("https://explorer-api.ravenland.org/address/" + signingAddress + "/balances")
 	if err != nil {
@@ -292,12 +323,12 @@ func checkRvnAsset(scs *livenet.SimpleCoinSale, signingAddress string) (bool, er
 		return false, fmt.Errorf("balance decode failed: %w", err)
 	}
 
-	bal, ok := balResponse.Data[scs.Destination]
+	bal, ok := balResponse.Data[sah.Asset]
 	if !ok {
 		return false, nil
 	}
 
-	paid = bal >= float64(scs.Amount)/float64(scs.Scale)
+	paid = bal >= float64(sah.Amount)/float64(sah.Scale)
 
 	return paid, nil
 }
