@@ -96,21 +96,27 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 	}
 
 	paid := false
-	scs, ok := term.(*livenet.SimpleCoinSale)
-	if ok {
-		done := false
-		err, paid, done = simpleSale(w, proofPost, opts, scs, termString)
-		if done {
-			return
+	switch termString {
+	case "3733247363": // SimpleCoinSale
+		scs, ok := term.(*livenet.SimpleCoinSale)
+		if ok {
+			done := false
+			err, paid, done = simpleSale(w, proofPost, opts, scs, termString)
+			if done {
+				return
+			}
 		}
-	}
-	sah, ok := term.(*livenet.SimpleAssetHeld)
-	if ok {
-		done := false
-		err, paid, done = simpleAsset(w, proofPost, opts, sah, termString)
-		if done {
-			return
+	case "3993842283": // SimpleAssetHeld
+		sah, ok := term.(*livenet.SimpleAssetHeld)
+		if ok {
+			done := false
+			err, paid, done = simpleAsset(w, proofPost, opts, sah, termString)
+			if done {
+				return
+			}
 		}
+	default:
+		// unsupported term
 	}
 
 	if err != nil {
@@ -152,7 +158,9 @@ func simpleSale(w http.ResponseWriter, proofPost *LocationProofRequest, opts map
 	}
 	ok := false
 	paid := false
-	if bytes.Equal(scs.Coin.Raw, decodedFloBytes) {
+
+	switch {
+	case bytes.Equal(scs.Coin.Raw, decodedFloBytes):
 		log.Info("checking flo")
 		ok, err = flo.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
 		if !ok || err != nil {
@@ -163,7 +171,8 @@ func simpleSale(w http.ResponseWriter, proofPost *LocationProofRequest, opts map
 			return nil, false, true
 		}
 		paid, err = checkFloPayment(txh, scs, proofPost.SigningAddress)
-	} else if bytes.Equal(scs.Coin.Raw, decodedRvnBytes) {
+
+	case bytes.Equal(scs.Coin.Raw, decodedRvnBytes):
 		log.Info("checking rvn")
 		ok, err = rvn.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
 		if !ok || err != nil {
@@ -174,7 +183,7 @@ func simpleSale(w http.ResponseWriter, proofPost *LocationProofRequest, opts map
 			return nil, false, true
 		}
 		paid, err = checkRvnPayment(txh, scs, proofPost.SigningAddress)
-	} else {
+	default:
 		log.Error("No matching coin", logger.Attrs{"coin": scs.Coin.String(), "id": opts["id"], "term": termString})
 	}
 	return err, paid, false
@@ -182,8 +191,9 @@ func simpleSale(w http.ResponseWriter, proofPost *LocationProofRequest, opts map
 
 func simpleAsset(w http.ResponseWriter, proofPost *LocationProofRequest, opts map[string]string, sah *livenet.SimpleAssetHeld, termString string) (error, bool, bool) {
 	paid := false
-	if bytes.Equal(sah.Coin.Raw, decodedRvnBytes) {
-		log.Info("checking rvn")
+	switch {
+	case bytes.Equal(sah.Coin.Raw, decodedRvnBytes):
+		log.Info("checking rvn asset")
 		ok, err := rvn.CheckSignature(proofPost.SigningAddress, proofPost.Signature, proofPost.PreImage)
 		if !ok || err != nil {
 			httpapi.RespondJSON(w, 400, map[string]interface{}{
@@ -194,7 +204,8 @@ func simpleAsset(w http.ResponseWriter, proofPost *LocationProofRequest, opts ma
 		}
 		paid, err = checkRvnAsset(sah, proofPost.SigningAddress)
 		return err, paid, false
-	} else {
+
+	default:
 		log.Error("No matching coin", logger.Attrs{"coin": sah.Coin.String(), "id": opts["id"], "term": termString})
 		return nil, false, false
 	}
@@ -357,20 +368,33 @@ func handleLocationRequest(w http.ResponseWriter, r *http.Request) {
 	}
 
 	amount := uint32(0)
-	scs, ok := term.(*livenet.SimpleCoinSale)
-	if !ok {
+	switch termString {
+	case "3733247363": // SimpleCoinSale
+		scs, ok := term.(*livenet.SimpleCoinSale)
+		if !ok {
+			httpapi.RespondJSON(w, 400, map[string]interface{}{
+				"error": "term error",
+			})
+			log.Error("error casting term", logger.Attrs{"term": term})
+			return
+		}
+		amount = scs.Amount
+	case "3993842283": // SimpleAssetHeld
 		sah, ok := term.(*livenet.SimpleAssetHeld)
 		if !ok {
 			httpapi.RespondJSON(w, 400, map[string]interface{}{
-				"error": "unsupported term",
+				"error": "term error",
 			})
-			log.Error("unsupported term type", logger.Attrs{"term": term})
+			log.Error("error casting term", logger.Attrs{"term": term})
 			return
-		} else {
-			amount = sah.Amount
 		}
-	} else {
-		amount = scs.Amount
+		amount = sah.Amount
+	default:
+		httpapi.RespondJSON(w, 400, map[string]interface{}{
+			"error": "unsupported term",
+		})
+		log.Error("unsupported term type", logger.Attrs{"term": term})
+		return
 	}
 
 	t := time.Now()
