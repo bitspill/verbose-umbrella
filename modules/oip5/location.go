@@ -356,13 +356,21 @@ func handleLocationRequest(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	amount := uint32(0)
 	scs, ok := term.(*livenet.SimpleCoinSale)
 	if !ok {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "unsupported term",
-		})
-		log.Error("unsupported term type", logger.Attrs{"term": term})
-		return
+		sah, ok := term.(*livenet.SimpleAssetHeld)
+		if !ok {
+			httpapi.RespondJSON(w, 400, map[string]interface{}{
+				"error": "unsupported term",
+			})
+			log.Error("unsupported term type", logger.Attrs{"term": term})
+			return
+		} else {
+			amount = sah.Amount
+		}
+	} else {
+		amount = scs.Amount
 	}
 
 	t := time.Now()
@@ -370,14 +378,14 @@ func handleLocationRequest(w http.ResponseWriter, r *http.Request) {
 	httpapi.RespondJSON(w, 200, LocationRequestResponse{
 		Id:         opts["id"],
 		Term:       termString,
-		PreImage:   fmt.Sprintf("%s-%s-%d-%d", opts["id"], termString, scs.Amount, t.Unix()),
+		PreImage:   fmt.Sprintf("%s-%s-%d-%d", opts["id"], termString, amount, t.Unix()),
 		ValidUntil: t.Add(3 * time.Minute).Unix(),
 	})
 }
 
 func getTerm(rec *oip5Record, termString string) (*livenet.CommercialContent, interface{}, error) {
-	if strings.ToLower(termString) != "3733247363" {
-		return nil, nil, errors.New("only simple coin sale is supported")
+	if strings.ToLower(termString) != "3733247363" && strings.ToLower(termString) != "3993842283" {
+		return nil, nil, errors.New("only simple terms are supported")
 	}
 
 	comCont, err := getCommercialContent(rec)
@@ -433,6 +441,15 @@ func getEmbeddedTerm(rec *oip5Record, comCont *livenet.CommercialContent, term s
 			return nil, errors.New("unable to unmarshal terms")
 		}
 		return scs, nil
+	}
+
+	if emTerm == 3993842283 {
+		sah := &livenet.SimpleAssetHeld{}
+		err := ptypes.UnmarshalAny(a, sah)
+		if err != nil {
+			return nil, errors.New("unable to unmarshal terms")
+		}
+		return sah, nil
 	}
 
 	return nil, errors.New("embedded term not found")
