@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"github.com/oipwg/oip/rvn"
 	"io/ioutil"
 	"net/http"
@@ -319,6 +320,7 @@ func checkRvnAsset(sah *livenet.SimpleAssetHeld, signingAddress string) (bool, e
 
 	res, err := http.Get("https://explorer-api.ravenland.org/address/" + signingAddress + "/balances")
 	if err != nil {
+		log.Error("RavenLand balance failure", spew.Sdump(err))
 		return false, fmt.Errorf("balance request failed: %w", err)
 	}
 
