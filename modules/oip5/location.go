@@ -29,12 +29,18 @@ import (
 var decodedFloBytes []byte
 var decodedRvnBytes []byte
 
+var ravenClient *http.Client
+
 func init() {
 	o5Router.HandleFunc("/location/request", handleLocationRequest).Queries("id", "{id:[a-fA-F0-9]+}", "terms", "{terms}")
 	o5Router.HandleFunc("/location/proof", handleLocationProof).Queries("id", "{id:[a-fA-F0-9]+}", "terms", "{terms}")
 
 	decodedFloBytes, _ = hex.DecodeString("f9964d1e840608b68a3795fd2597e9b232dfce1029251d481b2110c83a68adf7")
 	decodedRvnBytes, _ = hex.DecodeString("e1a9b68de823bdee67f1a8c55167cc15bf7006129d9acf072721a4043932b389")
+
+	ravenTransport := http.DefaultTransport.(*http.Transport).Clone()
+	ravenTransport.TLSClientConfig.InsecureSkipVerify = true
+	ravenClient = &http.Client{Transport: ravenTransport}
 }
 
 const commercialContentTypeUrl = "type.googleapis.com/oipProto.templates.tmpl_D8D0F22C"
@@ -268,7 +274,7 @@ func checkRvnPayment(txh *chainhash.Hash, scs *livenet.SimpleCoinSale, signingAd
 	paid := false
 
 	txid := txh.String()
-	res, err := http.Get("https://explorer-api.ravenland.org/tx/" + txid)
+	res, err := ravenClient.Get("https://explorer-api.ravenland.org/tx/" + txid)
 	if err != nil {
 		return false, fmt.Errorf("tx request failed: %w", err)
 	}
@@ -318,7 +324,7 @@ func checkRvnAsset(sah *livenet.SimpleAssetHeld, signingAddress string) (bool, e
 		return false, errors.New("asset access expired")
 	}
 
-	res, err := http.Get("https://explorer-api.ravenland.org/address/" + signingAddress + "/balances")
+	res, err := ravenClient.Get("https://explorer-api.ravenland.org/address/" + signingAddress + "/balances")
 	if err != nil {
 		log.Error("RavenLand balance failure", spew.Sdump(err))
 		return false, fmt.Errorf("balance request failed: %w", err)
