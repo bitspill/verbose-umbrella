@@ -1,7 +1,6 @@
 package rvn
 
 import (
-	"github.com/bitspill/flod/chaincfg"
 	"github.com/bitspill/flosig"
 	"github.com/bitspill/floutil"
 	"github.com/pkg/errors"
@@ -12,9 +11,9 @@ import (
 func CheckAddress(address string) (bool, error) {
 	var err error
 	if config.IsTestnet() {
-		_, err = floutil.DecodeAddress(address, &chaincfg.BtcTestNet3Params)
+		_, err = floutil.DecodeAddress(address, &TestNetParams)
 	} else {
-		_, err = floutil.DecodeAddress(address, &chaincfg.BtcMainNetParams)
+		_, err = floutil.DecodeAddress(address, &MainNetParams)
 	}
 	if err != nil {
 		return false, err
@@ -26,9 +25,9 @@ func CheckSignature(address, signature, message string) (bool, error) {
 	var ok bool
 	var err error
 	if config.IsTestnet() {
-		ok, err = flosig.CheckSignature(address, signature, message, "Raven", &RvnTestNetParams)
+		ok, err = flosig.CheckSignature(address, signature, message, "Raven", &TestNetParams)
 	} else {
-		ok, err = flosig.CheckSignature(address, signature, message, "Raven", &RvnMainNetParams)
+		ok, err = flosig.CheckSignature(address, signature, message, "Raven", &MainNetParams)
 	}
 	if !ok && err == nil {
 		err = errors.New("bad signature")
