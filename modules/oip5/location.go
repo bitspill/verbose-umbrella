@@ -92,7 +92,6 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		log.Error("unable to get record", logger.Attrs{"err": err, "txid": opts["id"]})
 		return
 	}
-
 	comCont, term, err := getTerm(rec, termString)
 	if err != nil {
 		httpapi.RespondJSON(w, 400, map[string]interface{}{
@@ -102,45 +101,47 @@ func handleLocationProof(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	paid := false
-	switch termString {
-	case "3733247363": // SimpleCoinSale
-		scs, ok := term.(*livenet.SimpleCoinSale)
-		if ok {
-			done := false
-			err, paid, done = simpleSale(w, proofPost, opts, scs, termString)
-			if done {
-				return
-			}
-		}
-	case "3993842283": // SimpleAssetHeld
-		sah, ok := term.(*livenet.SimpleAssetHeld)
-		if ok {
-			done := false
-			err, paid, done = simpleAsset(w, proofPost, opts, sah, termString)
-			if done {
-				return
-			}
-		}
-	default:
-		// unsupported term
-	}
-
-	if err != nil {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "unable to check proof",
-		})
-		log.Error("unable to check payment", logger.Attrs{"paymentId": proofPost.PaymentTxid, "signingAddress": proofPost.SigningAddress, "id": opts["id"], "term": termString, "err": err})
-		return
-	}
-
-	if !paid {
-		httpapi.RespondJSON(w, 400, map[string]interface{}{
-			"error": "insufficient proof",
-		})
-		log.Error("insufficient proof", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString})
-		return
-	}
+	// ToDo temp bypass all authentication
+	_ = term
+	//paid := false
+	//switch termString {
+	//case "3733247363": // SimpleCoinSale
+	//	scs, ok := term.(*livenet.SimpleCoinSale)
+	//	if ok {
+	//		done := false
+	//		err, paid, done = simpleSale(w, proofPost, opts, scs, termString)
+	//		if done {
+	//			return
+	//		}
+	//	}
+	//case "3993842283": // SimpleAssetHeld
+	//	sah, ok := term.(*livenet.SimpleAssetHeld)
+	//	if ok {
+	//		done := false
+	//		err, paid, done = simpleAsset(w, proofPost, opts, sah, termString)
+	//		if done {
+	//			return
+	//		}
+	//	}
+	//default:
+	//	// unsupported term
+	//}
+	//
+	//if err != nil {
+	//	httpapi.RespondJSON(w, 400, map[string]interface{}{
+	//		"error": "unable to check proof",
+	//	})
+	//	log.Error("unable to check payment", logger.Attrs{"paymentId": proofPost.PaymentTxid, "signingAddress": proofPost.SigningAddress, "id": opts["id"], "term": termString, "err": err})
+	//	return
+	//}
+	//
+	//if !paid {
+	//	httpapi.RespondJSON(w, 400, map[string]interface{}{
+	//		"error": "insufficient proof",
+	//	})
+	//	log.Error("insufficient proof", logger.Attrs{"paymentId": proofPost.PaymentTxid, "id": opts["id"], "term": termString})
+	//	return
+	//}
 
 	t := time.Now()
 
