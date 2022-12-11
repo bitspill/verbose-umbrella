@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/bitspill/flod/flojson"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 func init() {
@@ -31,7 +31,7 @@ func GetLastBlock(ctx context.Context) (BlockData, error) {
 	}
 
 	var br BlockData
-	err = json.Unmarshal(*sRes.Hits.Hits[0].Source, &br)
+	err = json.Unmarshal(sRes.Hits.Hits[0].Source, &br)
 
 	if err != nil {
 		return BlockData{}, err
@@ -61,7 +61,7 @@ func GetBlockFromID(ctx context.Context, id string) (BlockData, error) {
 	}
 	if get.Found {
 		var bd BlockData
-		err := json.Unmarshal(*get.Source, &bd)
+		err := json.Unmarshal(get.Source, &bd)
 		return bd, err
 	} else {
 		return BlockData{}, errors.New("ID not found")

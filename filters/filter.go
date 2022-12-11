@@ -10,8 +10,8 @@ import (
 	"github.com/azer/logger"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/oipwg/oip/datastore"
+	"github.com/olivere/elastic/v7"
 	"github.com/spf13/viper"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 var filterBox = packr.New("bundled", "./bundled")

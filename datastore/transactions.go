@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	"github.com/bitspill/flod/flojson"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 func init() {
@@ -34,7 +34,7 @@ func GetTransactionFromID(ctx context.Context, id string) (TransactionData, erro
 	}
 	if get.Found {
 		var td TransactionData
-		err := json.Unmarshal(*get.Source, &td)
+		err := json.Unmarshal(get.Source, &td)
 		return td, err
 	} else {
 		return TransactionData{}, errors.New("ID not found")

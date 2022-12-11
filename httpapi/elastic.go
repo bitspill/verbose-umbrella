@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	"github.com/oipwg/oip/datastore"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func GenerateNextAfter(hit *elastic.SearchHit) string {
@@ -14,8 +14,8 @@ func GenerateNextAfter(hit *elastic.SearchHit) string {
 	return url.QueryEscape(string(b))
 }
 
-func ExtractSources(results *elastic.SearchResult) ([]*json.RawMessage, string) {
-	sources := make([]*json.RawMessage, len(results.Hits.Hits))
+func ExtractSources(results *elastic.SearchResult) ([]json.RawMessage, string) {
+	sources := make([]json.RawMessage, len(results.Hits.Hits))
 	nextAfter := ""
 	for k, v := range results.Hits.Hits {
 		sources[k] = v.Source

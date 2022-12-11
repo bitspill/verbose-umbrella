@@ -13,7 +13,7 @@ import (
 	"github.com/oipwg/oip/events"
 	"github.com/oipwg/oip/httpapi"
 	"github.com/oipwg/oip/oipProto"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 const histDataPointIndexName = "historian_data_point_"

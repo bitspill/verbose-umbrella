@@ -4,7 +4,7 @@ import (
 	"github.com/azer/logger"
 	"github.com/json-iterator/go"
 	"github.com/oipwg/oip/datastore"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func on42JsonRegisterPub(any jsoniter.Any, tx *datastore.TransactionData) {

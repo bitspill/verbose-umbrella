@@ -10,9 +10,9 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	json "github.com/json-iterator/go"
+	"github.com/olivere/elastic/v7"
 	"github.com/rs/cors"
 	"github.com/spf13/viper"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 var rootRouter = mux.NewRouter().PathPrefix("/oip").Subrouter()

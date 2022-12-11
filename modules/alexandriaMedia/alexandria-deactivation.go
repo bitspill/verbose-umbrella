@@ -9,7 +9,7 @@ import (
 	"github.com/oipwg/oip/datastore"
 	"github.com/oipwg/oip/events"
 	"github.com/oipwg/oip/flo"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 const adIndexName = `alexandria-deactivation`
@@ -89,9 +89,9 @@ func onMpCompleted() {
 
 	for _, v := range results.Hits.Hits {
 		var ea elasticAd
-		err := json.Unmarshal(*v.Source, &ea)
+		err := json.Unmarshal(v.Source, &ea)
 		if err != nil {
-			log.Info("failed to unmarshal elastic hit", logger.Attrs{"err": err, "source": *v.Source, "id": v.Id})
+			log.Info("failed to unmarshal elastic hit", logger.Attrs{"err": err, "source": v.Source, "id": v.Id})
 			continue
 		}
 

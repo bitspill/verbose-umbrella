@@ -10,7 +10,7 @@ import (
 	"github.com/oipwg/oip/filters"
 	"github.com/oipwg/oip/flo"
 	"github.com/oipwg/oip/modules/oip042/validators"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func on42JsonPublishArtifact(artifact jsoniter.Any, tx *datastore.TransactionData) {

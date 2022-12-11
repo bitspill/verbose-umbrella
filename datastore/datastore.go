@@ -12,9 +12,9 @@ import (
 	"github.com/azer/logger"
 	"github.com/gobuffalo/packr/v2"
 	"github.com/oipwg/oip/config"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
 	"github.com/spf13/viper"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 var client *elastic.Client

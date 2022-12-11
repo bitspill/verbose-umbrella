@@ -16,6 +16,3 @@ developers external to OIPWG.
 7. The executable is `oipd` built in the root directory of the project
 8. run tests with `go test -v -race`
 
-
-## Contacts
-Chris Chrysostom, cchrysostom@mediciland.com

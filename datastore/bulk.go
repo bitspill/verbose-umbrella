@@ -8,7 +8,7 @@ import (
 	"github.com/azer/logger"
 	"github.com/dustin/go-humanize"
 	"github.com/oipwg/oip/events"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func BeginBulkIndexer() BulkIndexer {

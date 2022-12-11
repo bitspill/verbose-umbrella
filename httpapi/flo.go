@@ -7,7 +7,7 @@ import (
 
 	"github.com/azer/logger"
 	"github.com/gorilla/mux"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func init() {

@@ -9,7 +9,7 @@ import (
 	"github.com/oipwg/oip/datastore"
 	"github.com/oipwg/oip/events"
 	"github.com/oipwg/oip/httpapi"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 const apIndexName = "alexandria-publisher"

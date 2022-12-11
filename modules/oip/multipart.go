@@ -18,8 +18,8 @@ import (
 	"github.com/oipwg/oip/httpapi"
 	"github.com/oipwg/oip/oipProto"
 	oipSync "github.com/oipwg/oip/sync"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 const multipartIndex = "oip-multipart-single"
@@ -145,7 +145,7 @@ func queryMultiparts(multiparts map[string]Multipart, after []interface{}) ([]in
 
 	for i, v := range results.Hits.Hits {
 		var mps MultipartSingle
-		err := json.Unmarshal(*v.Source, &mps)
+		err := json.Unmarshal(v.Source, &mps)
 		if err != nil {
 			log.Info("failed to unmarshal elastic hit", logger.Attrs{"err": err})
 			continue

@@ -17,7 +17,7 @@ import (
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/oipwg/oip/datastore"
 	"github.com/oipwg/oip/oipProto"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func normalizeRecord(r *RecordProto, tx *datastore.TransactionData) error {

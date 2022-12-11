@@ -16,7 +16,7 @@ import (
 	lru "github.com/hashicorp/golang-lru"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/oipwg/oip/oipProto"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 
 	"github.com/oipwg/oip/datastore"
 	"github.com/oipwg/oip/events"
@@ -162,7 +162,7 @@ func GetRecord(txid string) (*oip5Record, error) {
 	}
 	if get.Found {
 		var eRec elasticOip5Record
-		err := json.Unmarshal(*get.Source, &eRec)
+		err := json.Unmarshal(get.Source, &eRec)
 		if err != nil {
 			return nil, err
 		}
@@ -212,7 +212,7 @@ func GetPublisherName(pubKey string) (string, error) {
 	}
 
 	if len(results.Hits.Hits) > 0 {
-		src := *results.Hits.Hits[0].Source
+		src := results.Hits.Hits[0].Source
 		pn := jsoniter.Get(src, "record", "details", "tmpl_433C2783", "name").ToString()
 		publisherCache.Add(pubKey, pn)
 		return pn, nil

@@ -12,8 +12,8 @@ import (
 	"github.com/oipwg/oip/filters"
 	"github.com/oipwg/oip/flo"
 	"github.com/oipwg/oip/httpapi"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 const oip41IndexName = "oip041"

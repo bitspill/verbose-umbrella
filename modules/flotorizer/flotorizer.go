@@ -6,7 +6,7 @@ import (
 	"github.com/oipwg/oip/config"
 	"github.com/oipwg/oip/datastore"
 	"github.com/oipwg/oip/events"
-	"gopkg.in/olivere/elastic.v6"
+	"github.com/olivere/elastic/v7"
 )
 
 func init() {

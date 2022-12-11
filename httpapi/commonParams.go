@@ -9,8 +9,8 @@ import (
 	"strings"
 
 	"github.com/azer/logger"
+	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
-	"gopkg.in/olivere/elastic.v6"
 )
 
 var sortRe = regexp.MustCompile(`([0-9a-zA-Z._-]+:[ad]$?)+`)
