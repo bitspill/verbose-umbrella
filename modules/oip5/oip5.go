@@ -13,7 +13,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes"
 	"github.com/golang/protobuf/ptypes/any"
-	lru "github.com/hashicorp/golang-lru"
+	lru "github.com/hashicorp/golang-lru/v2"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/oipwg/oip/oipProto"
 	"github.com/olivere/elastic/v7"
@@ -25,8 +25,8 @@ import (
 const recordCacheDepth = 10000
 const publisherCacheDepth = 1000
 
-var recordCache *lru.Cache
-var publisherCache *lru.Cache
+var recordCache *lru.Cache[string, *oip5Record]
+var publisherCache *lru.Cache[string, string]
 
 var normalizers = make(map[uint32][]*NormalizeRecordProto)
 
@@ -37,8 +37,8 @@ func init() {
 	datastore.RegisterMapping("oip5_templates", "oip5_templates.json")
 	datastore.RegisterMapping("oip5_record", "oip5_record.json")
 
-	recordCache, _ = lru.New(recordCacheDepth)
-	publisherCache, _ = lru.New(publisherCacheDepth)
+	recordCache, _ = lru.New[string, *oip5Record](recordCacheDepth)
+	publisherCache, _ = lru.New[string, string](publisherCacheDepth)
 }
 
 func on5msg(msg *oipProto.SignedMessage, tx *datastore.TransactionData) {
@@ -153,7 +153,7 @@ func intakeRecord(r *RecordProto, pubKey []byte, tx *datastore.TransactionData) 
 func GetRecord(txid string) (*oip5Record, error) {
 	r, found := recordCache.Get(txid)
 	if found {
-		return r.(*oip5Record), nil
+		return r, nil
 	}
 
 	get, err := datastore.Client().Get().Index(datastore.Index("oip5_record")).Type("_doc").Id(txid).Do(context.Background())
@@ -192,7 +192,7 @@ func GetRecord(txid string) (*oip5Record, error) {
 func GetPublisherName(pubKey string) (string, error) {
 	pni, found := publisherCache.Get(pubKey)
 	if found {
-		return pni.(string), nil
+		return pni, nil
 	}
 
 	q := elastic.NewBoolQuery().Must(

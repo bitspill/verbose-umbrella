@@ -15,7 +15,7 @@ require (
 	github.com/golang/protobuf v1.5.2
 	github.com/gorilla/handlers v1.5.1 // ToDo deprecated
 	github.com/gorilla/mux v1.8.0 // ToDo deprecated
-	github.com/hashicorp/golang-lru v0.6.0 // ToDo major bump
+	github.com/hashicorp/golang-lru/v2 v2.0.1
 	github.com/jhump/protoreflect v1.14.0
 	github.com/json-iterator/go v1.1.12
 	github.com/olivere/elastic/v7 v7.0.32 // ToDo deprecated + major bump
