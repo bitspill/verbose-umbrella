@@ -2,13 +2,12 @@ package config
 
 import (
 	"bytes"
-	"io/ioutil"
+	_ "embed"
 	"os"
 	"path/filepath"
 
 	"github.com/azer/logger"
 	"github.com/bitspill/floutil"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -16,8 +15,10 @@ import (
 var (
 	appDir        string
 	defaultAppDir = floutil.AppDataDir("oipd", false)
-	configBox     = packr.New("defaults", "./defaults")
 )
+
+//go:embed defaults/config.example.yml
+var defaultConfig []byte
 
 func init() {
 	logger.SetOutput(os.Stdout)
@@ -32,11 +33,7 @@ func init() {
 	}
 	appDir = viper.GetString("appdir")
 
-	b, err := configBox.Find("config.example.yml")
-	if err != nil {
-		panic(err)
-	}
-	err = viper.ReadConfig(bytes.NewReader(b))
+	err = viper.ReadConfig(bytes.NewReader(defaultConfig))
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +52,7 @@ func init() {
 			if err != nil {
 				panic(err)
 			}
-			err = ioutil.WriteFile(confFile, b, 0600)
+			err = os.WriteFile(confFile, defaultConfig, 0600)
 			if err != nil {
 				panic(err)
 			}

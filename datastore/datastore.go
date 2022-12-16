@@ -4,13 +4,13 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"embed"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/azer/logger"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/oipwg/oip/config"
 	"github.com/olivere/elastic/v7"
 	"github.com/pkg/errors"
@@ -20,8 +20,9 @@ import (
 var client *elastic.Client
 var AutoBulk BulkIndexer
 
+//go:embed mappings/*
+var mapFS embed.FS
 var mappings = make(map[string]string)
-var mapBox = packr.New("mappings", "./mappings")
 
 func Setup(ctx context.Context) error {
 	var err error
@@ -96,10 +97,11 @@ func getHttpClient() (*http.Client, error) {
 
 func RegisterMapping(index, fileName string) {
 	index = Index(index) // apply proper prefix
-	mapping, err := mapBox.FindString(fileName)
+	b, err := mapFS.ReadFile("mappings/" + fileName)
 	if err != nil {
 		panic(fmt.Sprintf("Unable to find mapping %s for index %s", fileName, index))
 	}
+	mapping := string(b)
 	mappings[index] = mapping
 	if client != nil {
 		err := createIndex(context.TODO(), index, mapping)

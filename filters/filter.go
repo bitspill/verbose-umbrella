@@ -2,19 +2,20 @@ package filters
 
 import (
 	"context"
-	"io/ioutil"
+	"embed"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
 	"github.com/azer/logger"
-	"github.com/gobuffalo/packr/v2"
 	"github.com/oipwg/oip/datastore"
 	"github.com/olivere/elastic/v7"
 	"github.com/spf13/viper"
 )
 
-var filterBox = packr.New("bundled", "./bundled")
+//go:embed bundled/*
+var filterFS embed.FS
 var filterMap = make(map[string]int)  // first 8 txid: label id
 var filterMapB = make(map[string]int) // first 8 txid: label id
 var filterLabels = []string{""}
@@ -68,7 +69,7 @@ func updateRemoteBlacklists() {
 			log.Error("unable to get remote list", attrs)
 			continue
 		}
-		body, err := ioutil.ReadAll(res.Body)
+		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			attrs["err"] = err
 			log.Error("unable to get remote list", attrs)
@@ -85,11 +86,11 @@ func updateRemoteBlacklists() {
 
 func loadBundledLists(lists []string) error {
 	for _, label := range lists {
-		list, err := filterBox.FindString(label + ".txt")
+		list, err := filterFS.ReadFile("bundled/" + label + ".txt")
 		if err != nil {
 			return err
 		}
-		processList(list, label)
+		processList(string(list), label)
 	}
 
 	return nil
