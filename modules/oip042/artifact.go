@@ -71,7 +71,7 @@ func on42JsonPublishArtifact(artifact jsoniter.Any, tx *datastore.TransactionDat
 		Type:        "oip042",
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042ArtifactIndex)).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042ArtifactIndex)).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }
 
@@ -94,7 +94,7 @@ func on42JsonEditArtifact(any jsoniter.Any, tx *datastore.TransactionData) {
 		Type:      "artifact",
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042EditIndex)).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042EditIndex)).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }
 
@@ -117,7 +117,7 @@ func on42JsonTransferArtifact(any jsoniter.Any, tx *datastore.TransactionData) {
 		Type:      "artifact",
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042TransferIndex)).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042TransferIndex)).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }
 
@@ -140,6 +140,6 @@ func on42JsonDeactivateArtifact(any jsoniter.Any, tx *datastore.TransactionData)
 		Type:      "artifact",
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042DeactivateIndex)).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(oip042DeactivateIndex)).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }

@@ -82,7 +82,7 @@ func onAlexandriaMedia(floData string, tx *datastore.TransactionData) {
 			},
 		}
 
-		bir := elastic.NewBulkIndexRequest().Index(datastore.Index(amIndexName)).Type("_doc").Doc(el).Id(tx.Transaction.Txid)
+		bir := elastic.NewBulkIndexRequest().Index(datastore.Index(amIndexName)).Doc(el).Id(tx.Transaction.Txid)
 		datastore.AutoBulk.Add(bir)
 	} else {
 		log.Info("no title", attr)

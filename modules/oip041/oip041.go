@@ -80,7 +80,7 @@ func on41(floData string, tx *datastore.TransactionData) {
 		return
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index("oip041")).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index("oip041")).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }
 

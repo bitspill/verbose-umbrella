@@ -4,6 +4,11 @@ OIP Daemon
 Process that monitors the FLO Blockchain indexing property formatted OIP messages and provides search and retrieval of
 OIP records (aka artifacts).
 
+## Requirements
+- Go 1.18+
+- Elasticsearch 7+
+- Flod
+
 ## Build Instructions
 
 1. Clone repository to desired directory `git clone https://github.com/oipwg/oip`

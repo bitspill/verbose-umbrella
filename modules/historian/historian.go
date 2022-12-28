@@ -93,7 +93,7 @@ func onStringHdp(floData string, tx *datastore.TransactionData) {
 		return
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(histDataPointIndexName + "string")).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(histDataPointIndexName + "string")).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }
 
@@ -109,7 +109,7 @@ func onProtoHdp(hdp *oipProto.HistorianDataPoint, tx *datastore.TransactionData)
 		Tx:        tx,
 		Txid:      tx.Transaction.Txid,
 	}
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(histDataPointIndexName + "proto")).Type("_doc").Id(tx.Transaction.Txid).Doc(el)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(histDataPointIndexName + "proto")).Id(tx.Transaction.Txid).Doc(el)
 	datastore.AutoBulk.Add(bir)
 }
 

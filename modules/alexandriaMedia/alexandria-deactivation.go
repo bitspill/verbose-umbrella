@@ -53,7 +53,7 @@ func onAlexandriaDeactivation(floData string, tx *datastore.TransactionData) {
 		},
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(adIndexName)).Type("_doc").Doc(ead).Id(tx.Transaction.Txid)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(adIndexName)).Doc(ead).Id(tx.Transaction.Txid)
 	datastore.AutoBulk.Add(bir)
 }
 
@@ -74,7 +74,7 @@ func onMpCompleted() {
 		elastic.NewTermQuery("meta.complete", false),
 		elastic.NewTermQuery("meta.stale", false),
 	)
-	results, err := datastore.Client().Search(datastore.Index(adIndexName)).Type("_doc").Query(q).Size(10000).Sort("meta.time", false).Do(context.TODO())
+	results, err := datastore.Client().Search(datastore.Index(adIndexName)).Query(q).Size(10000).Sort("meta.time", false).Do(context.TODO())
 	if err != nil {
 		log.Error("elastic search failed", logger.Attrs{"err": err})
 		return
@@ -97,15 +97,15 @@ func onMpCompleted() {
 
 		// deactivate the artifact
 		s := elastic.NewScript("ctx._source.meta.deactivated=true;").Type("inline").Lang("painless")
-		up := elastic.NewBulkUpdateRequest().Index(datastore.Index(amIndexName)).Id(ea.Reference).Type("_doc").Script(s)
+		up := elastic.NewBulkUpdateRequest().Index(datastore.Index(amIndexName)).Id(ea.Reference).Script(s)
 		datastore.AutoBulk.Add(up)
 		// All attempted oip-041 deactivation appear to be invalid
-		// up = elastic.NewBulkUpdateRequest().Index(datastore.Index("oip041")).Id(ea.Reference).Type("_doc").Script(s)
+		// up = elastic.NewBulkUpdateRequest().Index(datastore.Index("oip041")).Id(ea.Reference).Script(s)
 		// datastore.AutoBulk.Add(up)
 
 		// tag deactivation as completed
 		s = elastic.NewScript("ctx._source.meta.complete=true;").Type("inline").Lang("painless")
-		up = elastic.NewBulkUpdateRequest().Index(datastore.Index(adIndexName)).Id(ea.Meta.Txid).Type("_doc").Script(s)
+		up = elastic.NewBulkUpdateRequest().Index(datastore.Index(adIndexName)).Id(ea.Meta.Txid).Script(s)
 		datastore.AutoBulk.Add(up)
 	}
 }

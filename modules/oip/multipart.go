@@ -205,7 +205,7 @@ func tryCompleteMultipart(mp Multipart) {
 	}
 
 	for _, part := range mp.Parts {
-		upd := elastic.NewBulkUpdateRequest().Index(datastore.Index(multipartIndex)).Type("_doc").Id(part.Meta.Txid).Doc(newVal)
+		upd := elastic.NewBulkUpdateRequest().Index(datastore.Index(multipartIndex)).Id(part.Meta.Txid).Doc(newVal)
 		datastore.AutoBulk.Add(upd)
 	}
 
@@ -245,7 +245,7 @@ func onMultipartSingle(floData string, tx *datastore.TransactionData) {
 		ms.Meta.Tx = tx
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(multipartIndex)).Type("_doc").Doc(ms).Id(tx.Transaction.Txid)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(multipartIndex)).Doc(ms).Id(tx.Transaction.Txid)
 	datastore.AutoBulk.Add(bir)
 }
 
@@ -392,7 +392,7 @@ func onMultipartProto(msg *oipProto.SignedMessage, tx *datastore.TransactionData
 		Txid:      tx.Transaction.Txid,
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(multipartIndex)).Type("_doc").Doc(ms).Id(tx.Transaction.Txid)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index(multipartIndex)).Doc(ms).Id(tx.Transaction.Txid)
 	datastore.AutoBulk.Add(bir)
 }
 

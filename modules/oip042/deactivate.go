@@ -34,7 +34,7 @@ func onMpCompleted() {
 		elastic.NewTermQuery("meta.complete", false),
 		elastic.NewTermQuery("meta.stale", false),
 	)
-	results, err := datastore.Client().Search(datastore.Index(oip042DeactivateIndex)).Type("_doc").Query(q).Size(10000).Sort("meta.time", false).Do(context.TODO())
+	results, err := datastore.Client().Search(datastore.Index(oip042DeactivateIndex)).Query(q).Size(10000).Sort("meta.time", false).Do(context.TODO())
 	if err != nil {
 		log.Error("elastic search failed", logger.Attrs{"err": err})
 		return
@@ -57,12 +57,12 @@ func onMpCompleted() {
 
 		// deactivate the artifact
 		s := elastic.NewScript("ctx._source.meta.deactivated=true;").Type("inline").Lang("painless")
-		up := elastic.NewBulkUpdateRequest().Index(datastore.Index(oip042ArtifactIndex)).Id(ea.Deactivate.Reference).Type("_doc").Script(s)
+		up := elastic.NewBulkUpdateRequest().Index(datastore.Index(oip042ArtifactIndex)).Id(ea.Deactivate.Reference).Script(s)
 		datastore.AutoBulk.Add(up)
 
 		// tag deactivation as completed
 		s = elastic.NewScript("ctx._source.meta.complete=true;").Type("inline").Lang("painless")
-		up = elastic.NewBulkUpdateRequest().Index(datastore.Index(oip042DeactivateIndex)).Id(ea.Meta.Txid).Type("_doc").Script(s)
+		up = elastic.NewBulkUpdateRequest().Index(datastore.Index(oip042DeactivateIndex)).Id(ea.Meta.Txid).Script(s)
 		datastore.AutoBulk.Add(up)
 	}
 }

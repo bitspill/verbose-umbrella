@@ -1,19 +1,14 @@
 {
-  "settings": {
-    "number_of_shards": 2
-  },
   "mappings": {
-    "_doc": {
-      "dynamic": "strict",
-      "properties": {
-        "hash": {
-          "type": "keyword",
-          "index": false
-        },
-        "txId": {
-          "type": "keyword",
-          "ignore_above": 64
-        }
+    "dynamic": "strict",
+    "properties": {
+      "hash": {
+        "type": "keyword",
+        "index": false
+      },
+      "txId": {
+        "type": "keyword",
+        "ignore_above": 64
       }
     }
   }

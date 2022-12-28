@@ -156,7 +156,7 @@ func GetRecord(txid string) (*oip5Record, error) {
 		return r, nil
 	}
 
-	get, err := datastore.Client().Get().Index(datastore.Index("oip5_record")).Type("_doc").Id(txid).Do(context.Background())
+	get, err := datastore.Client().Get().Index(datastore.Index("oip5_record")).Id(txid).Do(context.Background())
 	if err != nil {
 		return nil, err
 	}

@@ -278,7 +278,7 @@ func CreateNewMessage(id string) (proto.Message, error) {
 }
 
 func LoadTemplatesFromES(ctx context.Context) error {
-	searchService := datastore.Client().Search(datastore.Index("oip5_templates")).Type("_doc").Size(10000)
+	searchService := datastore.Client().Search(datastore.Index("oip5_templates")).Size(10000)
 
 	res, err := searchService.Do(ctx)
 	if err != nil {

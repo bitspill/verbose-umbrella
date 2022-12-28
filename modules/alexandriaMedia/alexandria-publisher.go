@@ -69,6 +69,6 @@ func onAlexandriaPublisher(floData string, tx *datastore.TransactionData) {
 		return
 	}
 
-	bir := elastic.NewBulkIndexRequest().Index(datastore.Index("alexandria-publisher")).Type("_doc").Doc(pub).Id(tx.Transaction.Txid)
+	bir := elastic.NewBulkIndexRequest().Index(datastore.Index("alexandria-publisher")).Doc(pub).Id(tx.Transaction.Txid)
 	datastore.AutoBulk.Add(bir)
 }

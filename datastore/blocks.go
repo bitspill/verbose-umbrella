@@ -55,7 +55,7 @@ func StoreBlock(ctx context.Context, b BlockData) (*elastic.IndexResponse, error
 }
 
 func GetBlockFromID(ctx context.Context, id string) (BlockData, error) {
-	get, err := client.Get().Index(Index("blocks")).Type("_doc").Id(id).Do(ctx)
+	get, err := client.Get().Index(Index("blocks")).Id(id).Do(ctx)
 	if err != nil {
 		return BlockData{}, err
 	}
