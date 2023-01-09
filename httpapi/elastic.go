@@ -34,7 +34,6 @@ func BuildCommonSearchService(ctx context.Context, indexNames []string, query el
 
 	searchService := datastore.Client().
 		Search(indices...).
-		Type("_doc").
 		Query(query)
 
 	size := GetSizeFromContext(ctx)

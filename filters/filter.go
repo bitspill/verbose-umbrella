@@ -189,7 +189,6 @@ func swapLists() {
 		up := elastic.NewBulkUpdateRequest().
 			Index(datastore.Index("oip042_artifact")).
 			Id(value).
-			Type("_doc").
 			Doc(map[string]interface{}{
 				"meta": map[string]interface{}{
 					"blacklist": map[string]interface{}{
@@ -204,7 +203,6 @@ func swapLists() {
 		up := elastic.NewBulkUpdateRequest().
 			Index(datastore.Index("oip042_artifact")).
 			Id(value).
-			Type("_doc").
 			Doc(map[string]interface{}{
 				"meta": map[string]interface{}{
 					"blacklist": map[string]interface{}{

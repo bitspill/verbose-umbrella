@@ -136,7 +136,6 @@ func intakeRecord(r *RecordProto, pubKey []byte, tx *datastore.TransactionData) 
 
 	bir := elastic.NewBulkIndexRequest().
 		Index(datastore.Index("oip5_record")).
-		Type("_doc").
 		Id(tx.Transaction.Txid).
 		Doc(el)
 
@@ -201,7 +200,6 @@ func GetPublisherName(pubKey string) (string, error) {
 	)
 	results, err := datastore.Client().
 		Search(datastore.Index("oip5_record")).
-		Type("_doc").
 		Query(q).
 		Size(1).
 		Sort("meta.time", false).

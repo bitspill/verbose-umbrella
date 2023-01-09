@@ -66,7 +66,6 @@ func intakeRecordTemplate(rt *RecordTemplateProto, pubKey []byte, tx *datastore.
 
 	bir := elastic.NewBulkIndexRequest().
 		Index(datastore.Index("oip5_templates")).
-		Type("_doc").
 		Id(tx.Transaction.Txid).
 		Doc(elRt)
 

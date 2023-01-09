@@ -16,7 +16,6 @@ func init() {
 func StoreTransaction(ctx context.Context, t *TransactionData) (*elastic.IndexResponse, error) {
 	put1, err := client.Index().
 		Index("transaction").
-		Type("_doc").
 		Id(t.Transaction.Txid).
 		BodyJson(t).
 		Do(ctx)

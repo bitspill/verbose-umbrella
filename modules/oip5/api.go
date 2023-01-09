@@ -142,7 +142,6 @@ func handleGetMapping(w http.ResponseWriter, r *http.Request) {
 	res, err := datastore.Client().
 		GetFieldMapping().
 		Index(indexName).
-		Type("_doc").
 		Field(fields...).
 		Do(r.Context())
 
@@ -153,7 +152,7 @@ func handleGetMapping(w http.ResponseWriter, r *http.Request) {
 
 	fmt.Println(fields)
 
-	m := res[indexName].(map[string]interface{})["mappings"].(map[string]interface{})["_doc"].(map[string]interface{})
+	m := res[indexName].(map[string]interface{})["mappings"].(map[string]interface{})
 
 	var ret = make(map[string]interface{})
 

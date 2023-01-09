@@ -104,7 +104,6 @@ func (bi *BulkIndexer) EstimateSizeInBytes() int64 {
 func (bi *BulkIndexer) StoreBlock(bd BlockData) {
 	bir := elastic.NewBulkIndexRequest().
 		Index(Index("blocks")).
-		Type("_doc").
 		Id(bd.Block.Hash).
 		Doc(bd)
 	bi.Add(bir)
@@ -113,7 +112,6 @@ func (bi *BulkIndexer) StoreBlock(bd BlockData) {
 func (bi *BulkIndexer) DeleteBlock(hash string) {
 	bir := elastic.NewBulkDeleteRequest().
 		Index(Index("blocks")).
-		Type("_doc").
 		Id(hash)
 	bi.Add(bir)
 }
@@ -121,7 +119,6 @@ func (bi *BulkIndexer) DeleteBlock(hash string) {
 func (bi *BulkIndexer) StoreTransaction(td *TransactionData) {
 	bir := elastic.NewBulkIndexRequest().
 		Index(Index("transactions")).
-		Type("_doc").
 		Id(td.Transaction.Txid).
 		Doc(td)
 	bi.Add(bir)

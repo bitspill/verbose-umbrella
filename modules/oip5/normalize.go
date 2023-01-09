@@ -98,7 +98,6 @@ func applyNorm(rec *RecordProto, n *NormalizeRecordProto, tx *datastore.Transact
 
 	bir := elastic.NewBulkIndexRequest().
 		Index(datastore.Index("oip5_norm")).
-		Type("_doc").
 		Doc(el)
 
 	datastore.AutoBulk.Add(bir)
@@ -307,7 +306,6 @@ func intakeNormalize(n *NormalizeRecordProto, pubKey []byte, tx *datastore.Trans
 
 	bir := elastic.NewBulkIndexRequest().
 		Index(datastore.Index("oip5_normalize")).
-		Type("_doc").
 		Id(tx.Transaction.Txid).
 		Doc(el)
 

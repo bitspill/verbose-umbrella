@@ -126,7 +126,6 @@ func queryMultiparts(multiparts map[string]Multipart, after []interface{}) ([]in
 	)
 	search := datastore.Client().
 		Search(datastore.Index(multipartIndex)).
-		Type("_doc").
 		Query(q).
 		Size(searchSize).
 		Sort("meta.time", false).
@@ -343,8 +342,7 @@ func markStale() {
 		elastic.NewTermQuery("meta.stale", false),
 		elastic.NewRangeQuery("meta.time").Lte("now-1w"),
 	)
-	cuq := datastore.Client().UpdateByQuery(datastore.Index(multipartIndex)).Query(q).
-		Type("_doc").Script(s) // .Refresh("wait_for")
+	cuq := datastore.Client().UpdateByQuery(datastore.Index(multipartIndex)).Query(q).Script(s) // .Refresh("wait_for")
 
 	res, err := cuq.Do(context.TODO())
 	if err != nil {

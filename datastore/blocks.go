@@ -43,7 +43,6 @@ func GetLastBlock(ctx context.Context) (BlockData, error) {
 func StoreBlock(ctx context.Context, b BlockData) (*elastic.IndexResponse, error) {
 	put1, err := client.Index().
 		Index(Index("blocks")).
-		Type("_doc").
 		Id(b.Block.Hash).
 		BodyJson(b).
 		Do(ctx)
