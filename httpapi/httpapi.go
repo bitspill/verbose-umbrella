@@ -88,7 +88,7 @@ func RespondSearch(w http.ResponseWriter, searchService *elastic.SearchService) 
 	sources, nextAfter := ExtractSources(results)
 	RespondJSON(w, http.StatusOK, map[string]interface{}{
 		"count":   len(results.Hits.Hits),
-		"total":   results.Hits.TotalHits,
+		"total":   results.Hits.TotalHits.Value,
 		"results": sources,
 		"next":    nextAfter,
 	})
